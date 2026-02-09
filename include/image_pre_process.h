@@ -6,9 +6,9 @@
 #include <vector>
 
 ///全局变量
-cv::Size target_size;   //预定图像大小
-cv::Ptr<cv::CLAHE> clahe_;  // CLAHE对象
-int blur_kernel_size;
+extern cv::Size target_size;   //预定图像大小
+extern cv::Ptr<cv::CLAHE> clahe_;  // CLAHE对象
+extern int blur_kernel_size;
 ///主要函数
 
 /**
@@ -25,7 +25,7 @@ void process_init(int target_width = 640, int target_height = 480, const int& ke
  * @param output 输出图像 (HSV格式)
  * @return 处理成功返回true
  */
-bool process(const cv::Mat& input, cv::Mat& output);
+bool process(cv::Mat& input, cv::Mat& output);
 
 /**
  * @brief CLAHE处理函数

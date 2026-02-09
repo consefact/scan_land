@@ -1,28 +1,31 @@
 #include "color_detection.h"
 
+std::vector<ColorRange> ColorRanges;
+
 std::vector<ColorRange> color_detect_init(){
     return {
-        {"Red", cv::Scalar(0, 120, 70), cv::Scalar(10, 255, 255), cv::Scalar(0, 0, 255)},
-        {"Red", cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255), cv::Scalar(0, 0, 255)},
-        {"Green", cv::Scalar(35, 50, 50), cv::Scalar(85, 255, 255), cv::Scalar(0, 255, 0)},
-        {"Blue", cv::Scalar(100, 150, 0), cv::Scalar(140, 255, 255), cv::Scalar(255, 0, 0)},
-        {"Yellow", cv::Scalar(20, 100, 100), cv::Scalar(30, 255, 255), cv::Scalar(0, 255, 255)},
-        {"Orange", cv::Scalar(10, 100, 100), cv::Scalar(20, 255, 255), cv::Scalar(0, 165, 255)},
-        {"Purple", cv::Scalar(140, 50, 50), cv::Scalar(160, 255, 255), cv::Scalar(255, 0, 255)},
-        {"Cyan", cv::Scalar(85, 100, 100), cv::Scalar(100, 255, 255), cv::Scalar(255, 255, 0)}
+        {"Red", cv::Scalar(0, 43, 46), cv::Scalar(10, 255, 255), cv::Scalar(0, 0, 255)},
+        {"Red", cv::Scalar(156, 43, 46), cv::Scalar(180, 255, 255), cv::Scalar(0, 0, 255)},
+        {"Green", cv::Scalar(35, 43, 46), cv::Scalar(77, 255, 255), cv::Scalar(0, 255, 0)},
+        {"Blue", cv::Scalar(100, 43, 46), cv::Scalar(124, 255, 255), cv::Scalar(255, 0, 0)},
+        {"Yellow", cv::Scalar(26, 43, 46), cv::Scalar(34, 255, 255), cv::Scalar(0, 255, 255)},
+        {"Orange", cv::Scalar(11, 43, 46), cv::Scalar(25, 255, 255), cv::Scalar(0, 165, 255)},
+        {"Purple", cv::Scalar(125, 43, 46), cv::Scalar(155, 255, 255), cv::Scalar(255, 0, 255)},
+        {"Cyan", cv::Scalar(85, 100, 100), cv::Scalar(100, 255, 255), cv::Scalar(255, 255, 0)},
+        {"black", cv::Scalar(0, 0, 0), cv::Scalar(180, 255, 46), cv::Scalar(0, 0, 0)}
     };
 }
 
 ColorResult color_detect(cv::Mat input, std::string color_name){
     cv::Mat mask;
-    if(color_name.compare("red")){
+    if(color_name.compare("Red") == 0){
         cv::Mat mask1, mask2;
         cv::inRange(input, ColorRanges[0].lower, ColorRanges[0].upper, mask1);
         cv::inRange(input, ColorRanges[1].lower, ColorRanges[1].upper, mask2);
         mask = mask1 | mask2;
     } else {
         for(auto color: ColorRanges){
-            if(color.name.compare(color_name)){
+            if(color.name.compare(color_name) == 0){
                 cv::inRange(input, color.lower, color.upper, mask);
             }
         }
@@ -66,13 +69,13 @@ ColorResult color_detect(cv::Mat input, std::string color_name){
             }
         }
     }
-
+    // cv::drawContours(input, contour_max, -1, cv::Scalar(255, 0, 0));
     cv::Rect rect = cv::boundingRect(contour_max);
 
     return {color_name, static_cast<double>(pix_counter) / (input.cols * input.rows), rect, cv::Point(center_x / input.cols, center_y / input.rows), true};
 }
 
-void draw_info(cv::Mat input, cv::Mat output, ColorResult info){
+void draw_info(cv::Mat input, ColorResult info){
     // 绘制边界矩形
     cv::rectangle(input, info.largest_rect, cv::Scalar(0, 255, 0), 2);
                 
