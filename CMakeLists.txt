@@ -5,6 +5,17 @@ project(scan_land)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  sensor_msgs
+  image_transport
+  cv_bridge
+)
+
+catkin_package(
+  INCLUDE_DIRS include
+)
+
 # 查找 OpenCV 包
 find_package(OpenCV REQUIRED)
 if(OpenCV_FOUND)
@@ -15,13 +26,18 @@ else()
 endif()
 
 # 包含头文件目录
-include_directories(include)
+include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+)
 
 # 收集所有源文件
 file(GLOB SOURCES "src/*.cpp" "src/*.c")
 
-# 创建可执行文件
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-# 链接 OpenCV 库
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} 
+    ${catkin_LIBRARIES} 
+    ${OpenCV_LIBS}
+)

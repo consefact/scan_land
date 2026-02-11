@@ -1,3 +1,4 @@
+// clang-format Language: Cpp
 #ifndef IMAGE_PRE_PROCESS_H
 #define IMAGE_PRE_PROCESS_H
 
