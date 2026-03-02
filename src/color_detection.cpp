@@ -18,7 +18,32 @@ std::vector<ColorRange> color_detect_init(){
 
 ColorResult color_detect(cv::Mat input, std::string color_name){
     cv::Mat mask;
-    if(color_name.compare("Red") == 0){
+    bool detect_mode = false;
+
+    if(color_name.compare("None") == 0){
+        int area_max = 0, max_index = 0, index = 0;
+        for(auto color: ColorRanges){
+            cv::inRange(input, color.lower, color.upper, mask);
+            int pix_counter = 0, center_x = 0, center_y = 0;
+            for(int y = 0; y < mask.rows; y++){
+                for(int x = 0; x < mask.cols; x++){
+                    if(mask.data[y*mask.cols + x] == 255){
+                        center_x += x;
+                        center_y += y;
+                        pix_counter++;
+                    }
+                }
+            }
+            if(pix_counter > area_max){
+                area_max = pix_counter;
+                max_index = index;
+            }
+            index++;
+        }
+        cv::inRange(input, ColorRanges[max_index].lower, ColorRanges[max_index].upper, mask);
+        color_name = ColorRanges[max_index].name;
+    }
+    else if(color_name.compare("Red") == 0){
         cv::Mat mask1, mask2;
         cv::inRange(input, ColorRanges[0].lower, ColorRanges[0].upper, mask1);
         cv::inRange(input, ColorRanges[1].lower, ColorRanges[1].upper, mask2);
@@ -50,7 +75,7 @@ ColorResult color_detect(cv::Mat input, std::string color_name){
         }
     }
 
-    if(pix_counter < 0){
+    if(pix_counter == 0){
         std::cout << "no target color in input" << std::endl;
         return {"no target color", 0, cv::Rect(0, 0, 0, 0), cv::Point(0, 0), false};
     } 
@@ -61,7 +86,7 @@ ColorResult color_detect(cv::Mat input, std::string color_name){
 
     std::vector<cv::Point> contour_max;
     for(auto contour: contours){
-        double area = cv::contourArea(contour), area_max;
+        double area = cv::contourArea(contour), area_max = 0;
         if(area > 500){
             if(area > area_max){
                 area_max = area;

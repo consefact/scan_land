@@ -7,7 +7,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rospy
+  std_msgs
   sensor_msgs
+  geometry_msgs
+  vision_msgs
+  message_generation
+  livox_ros_driver
   image_transport
   cv_bridge
 )
@@ -17,7 +23,7 @@ catkin_package(
 )
 
 # 查找 OpenCV 包
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 4.2.0 REQUIRED)
 if(OpenCV_FOUND)
     message(STATUS "OpenCV found: ${OpenCV_VERSION}")
     include_directories(${OpenCV_INCLUDE_DIRS})
@@ -34,10 +40,16 @@ include_directories(
 
 # 收集所有源文件
 file(GLOB SOURCES "src/*.cpp" "src/*.c")
-
+# cpp compile part
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} 
     ${catkin_LIBRARIES} 
     ${OpenCV_LIBS}
+)
+
+#python part
+catkin_install_python(PROGRAMS
+  scripts/yolo_detector.py   # 新增Python脚本
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

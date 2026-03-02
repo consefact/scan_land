@@ -1,0 +1,6 @@
+<launch>
+<!-- 启动Python节点（新增） -->
+  <node pkg="scan_land" type="yolo_detector.py" name="yolo_detector_py" output="screen">
+   <rosparam command="load" file="$(find scan_land)/config/scan_land.yaml" />
+  </node>
+</launch>

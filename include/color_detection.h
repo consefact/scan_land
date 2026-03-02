@@ -43,7 +43,7 @@ std::vector<ColorRange> color_detect_init();
  * @param color_name 需检测颜色名
  * @return 返回检测结果
  */
-ColorResult color_detect(cv::Mat input, std::string color_name);
+ColorResult color_detect(cv::Mat input, std::string color_name = "None");
 
 /**
  * @brief 识别结果标识(边框，中心，颜色)
