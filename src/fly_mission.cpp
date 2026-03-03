@@ -1,7 +1,6 @@
 #include "collision_avoidance.h"
-#include "color_detection.h"
-#include "image_pre_process.h"
-#include "ros_inter.h"
+#include <std_msgs/Bool.h>
+#include <std_msgs/Int8.h>
 #include <vision_msgs/Detection2DArray.h>
 
 // 全局变量定义
@@ -16,19 +15,20 @@ float yolo_vel[2];
 double end_x = 0;
 double end_y = 0;
 float time_threshold = 1;
-cv::Mat image_processed;
-ColorResult takeoff_color;
-ColorResult land_color;
+std::string takeoff_color;
+std::string land_color;
+bool land_detected;
 std_msgs::String takeoff_msg;
+std_msgs::String land_color_msg;
+std_msgs::Bool land_detected_msg;
+std_msgs::Int8 mission_num_msg;
 geometry_msgs::PointStamped yolo_result;
 vision_msgs::Detection2DArray latest_detections;
-cv::Mat image_roi;
-cv::Rect roi;
-  enum {
-    search_mode,
-    follow_mode,
-    holding_mode
-  };
+enum {
+  search_mode,
+  follow_mode,
+  holding_mode
+};
 void print_param()
 {
   std::cout << "=== 控制参数 ===" << std::endl;
@@ -45,9 +45,23 @@ void yolo_result_cb(const geometry_msgs::PointStamped::ConstPtr &msg){
 }
 
 void yolo_boxes_cb(const vision_msgs::Detection2DArray::ConstPtr &msg) {
-    latest_detections = *msg;
-    // 可以进一步处理，例如找出最大框、特定类别等
+  latest_detections = *msg;
+  // 可以进一步处理，例如找出最大框、特定类别等
+}
 
+void takeoff_cb(const std_msgs::String::ConstPtr &msg){
+  takeoff_msg = *msg;
+  takeoff_color = takeoff_msg.data;
+}
+
+void land_color_cb(const std_msgs::String::ConstPtr &msg){
+  land_color_msg = *msg;
+  land_color = land_color_msg.data;
+}
+
+void land_detected_cb(const std_msgs::Bool::ConstPtr &msg){
+  land_detected_msg = *msg;
+  land_detected = land_detected_msg.data;
 }
 
 
@@ -59,11 +73,6 @@ int main(int argc, char **argv)
   // 初始化ROS节点
   ros::init(argc, argv, "collision_avoidance");
   ros::NodeHandle nh;
-
-  image_transport::ImageTransport it_(nh);
-  image_convrt(it_);
-  ColorRanges = color_detect_init();
-  process_init();
 
   // 订阅mavros相关话题
   ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
@@ -81,11 +90,18 @@ int main(int argc, char **argv)
   //yolo result sub
   ros::Subscriber yolo_sub = nh.subscribe<geometry_msgs::PointStamped>("/yolo/detection", 10, yolo_result_cb);
 
-  //takeoff color pub
-  ros::Publisher takeoff_color_pub = nh.advertise<std_msgs::String>("/color_detect/takeoff_color", 10);
+  //takeoff color sub
+  ros::Subscriber takeoff_color_sub = nh.subscribe<std_msgs::String>("/color_detect/takeoff_color", 10, takeoff_cb);
 
   //land color sub
-  ros::Subscriber land_color_sub = nh.subscribe<vision_msgs::Detection2DArray>("/yolo/detection_boxes", 10, yolo_boxes_cb);
+  ros::Subscriber land_color_sub = nh.subscribe<std_msgs::String>("/color_detect/land_color", 10, land_color_cb);
+
+  //land detected sub
+  ros::Subscriber land_detected_sub = nh.subscribe<std_msgs::Bool>("/color_detect/land_detected", 10, land_detected_cb);
+
+  //mission_num pub
+  ros::Publisher mission_num_pub = nh.advertise<std_msgs::Int8>("/color_detect/mission_num", 10);
+
   // 设置话题发布频率，需要大于2Hz，飞控连接有500ms的心跳包
   ros::Rate rate(20);
 
@@ -189,16 +205,8 @@ int main(int argc, char **argv)
       {
         mission_num = 1;
  	      last_request = ros::Time::now();
-        if(process(image_origin, image_processed)){
-          takeoff_color = color_detect(image_processed);
-          if(!takeoff_color.is_detected){
-            ROS_WARN("no color was detected");
-            return -1;
-          }
-          takeoff_msg.data = takeoff_color.name;
-          ROS_INFO("color was detected: %s", takeoff_color.name);
-          takeoff_color_pub.publish(takeoff_msg);
-        }
+        mission_num_msg.data = 1;
+        mission_num_pub.publish(mission_num_msg);
         break;
       }
     }
@@ -240,23 +248,13 @@ int main(int argc, char **argv)
         break;
       
       case 3:{
+        mission_num_msg.data = 2;
+        mission_num_pub.publish(mission_num_msg);
         ROS_INFO("yolo result: x: %f ,y: %f ,is_detected: %d", yolo_result.point.x, yolo_result.point.y, yolo_result.point.z);
-        if(!latest_detections.detections.empty()){
-          const auto& det = latest_detections.detections[0];
-          roi.x = cvRound(det.bbox.center.x - det.bbox.size_x / 2.0);
-          roi.y = cvRound(det.bbox.center.y - det.bbox.size_y / 2.0);
-          roi.width = cvRound(det.bbox.size_x);
-          roi.height = cvRound(det.bbox.size_y);
-        }
-        image_roi = image_origin(roi);
-        if(process(image_roi, image_processed)){
-          land_color = color_detect(image_processed, takeoff_color.name);
-          ROS_INFO("land_color: %s, is_detected: %d", land_color.name.c_str(), land_color.is_detected);
-        }
         switch(yolo_detect_mode){
           case search_mode:
             ROS_INFO("search mode");
-            if(land_color.is_detected && land_color.name.compare(takeoff_color.name) == 0 && yolo_result.point.z){
+            if(land_detected && land_color.compare(takeoff_color) == 0 && yolo_result.point.z){
               yolo_detect_mode = follow_mode;
               last_request = ros::Time::now();
               break;
@@ -269,13 +267,13 @@ int main(int argc, char **argv)
             }
             break;
           case follow_mode:
-            if(ros::Time::now() - last_request > ros::Duration(time_threshold) && land_color.is_detected && yolo_result.point.z == false || land_color.name.compare(takeoff_color.name)){
+            if(ros::Time::now() - last_request > ros::Duration(time_threshold) && land_detected && yolo_result.point.z == false || land_color.compare(takeoff_color)){
               yolo_detect_mode = search_mode;
               last_request = ros::Time::now();
               break;
             }
             ROS_INFO("follow mode");
-            if(land_color.name.compare(takeoff_color.name) == 0 && hypot(yolo_result.point.x, yolo_result.point.y) < 0.1){
+            if(land_color.compare(takeoff_color) == 0 && hypot(yolo_result.point.x, yolo_result.point.y) < 0.1){
               // yolo_detect_mode = holding_mode;
               mission_num = 4;
               end_x = local_pos.pose.pose.position.x;
@@ -314,6 +312,9 @@ int main(int argc, char **argv)
       }
       //降落
       case 4:
+        mission_num_msg.data = 3;
+        mission_num_pub.publish(mission_num_msg);
+
         if(precision_land())
         {
           mission_num = -1; // 任务结束

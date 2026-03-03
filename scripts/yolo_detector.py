@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+import sys
 import rospy
 import cv2
 import numpy as np
 from cv_bridge import CvBridge
+from std_msgs.msg import Int8
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import PointStamped, Point
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
@@ -43,7 +45,14 @@ class YOLODetector:
         self.detection_pub = rospy.Publisher('/yolo/detection', PointStamped, queue_size=10)
         self.debug_image_pub = rospy.Publisher('/yolo/debug_image', Image, queue_size=1)
         self.bbox_pub = rospy.Publisher('/yolo/detection_boxes', Detection2DArray, queue_size=10)
+        self.mission_sub = rospy.Subscriber('/color_detect/mission_num', Int8, self.mission_callback, queue_size=1)
         rospy.loginfo("YOLO检测节点初始化完成")
+
+    def mission_callback(self, msg):
+        mission_num = msg.data
+        if mission_num == 3:
+            sys.exit(0)
+
 
     def image_callback(self, msg):
         try:
