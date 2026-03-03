@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # 创建会话和第一个窗口
 tmux new-session -d -s ros_session -n color_detect_nodes

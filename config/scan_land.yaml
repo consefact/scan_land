@@ -4,10 +4,11 @@ confidence_threshold : 0.3
 nms_threshold : 0.45
 input_width : 320
 input_height : 320
-yolo_follow_kp : -2
+
 #for fly
 if_debug : 1
 err_max : 0.3
 p_xy : 0.3
 vel_track_max : 0.4
 time_threshold : 3.0
+yolo_follow_kp : -2

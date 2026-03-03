@@ -2,7 +2,6 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Point.h>
-#include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <mavros_msgs/CommandBool.h>
@@ -377,7 +376,13 @@ bool collision_avoidance_mission(float target_x,float target_y,float target_z,fl
     return false;
 
 }
-
+/// @brief 用追踪速度控制
+/// @param x 目标x坐标
+/// @param y 目标y坐标
+/// @param z 高度
+/// @param target_yaw 
+/// @param error_max 误差
+/// @return 
 bool control_by_vel(float x, float y, float z, float target_yaw, float error_max);
 bool control_by_vel(float x, float y, float z, float target_yaw, float error_max){
 	vel_track[0] = p_xy * (x - local_pos.pose.pose.position.x);
