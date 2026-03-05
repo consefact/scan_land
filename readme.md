@@ -29,3 +29,18 @@
 - yolo_follow_kp follow_mode对齐目标系数
 
 ### 4. shell/
+找新的一面启动就行
+
+### 5.依赖
+需要嵌合进主体的部分保证有
+- roscpp
+- std_msgs
+- geometry_msgs
+- vision_msgs
+- message_generation
+就行
+
+### 其他
+因为模型训的有点烂，红底的H识别率超低(大概是数据集的停机坪基本是绿底的)
+建议把起点H换成蓝色——地图文件找h_takeoff，有个值是Gazebo/Red 改成Gazebo/Blue
+
