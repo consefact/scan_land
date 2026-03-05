@@ -78,7 +78,7 @@ int main(int argc, char **argv)
                     takeoff_color = color_detect(image_processed);
                     if(!takeoff_color.is_detected){
                         ROS_WARN("no color was detected");
-                        return -1;
+                        break;
                     }
                     takeoff_msg.data = takeoff_color.name;
                     ROS_INFO("color was detected: %s", takeoff_color.name);
