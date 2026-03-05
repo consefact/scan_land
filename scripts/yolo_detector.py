@@ -64,8 +64,8 @@ class YOLODetector:
             detections = self.detect(cv_image)
             rospy.loginfo("detections: %i", len(detections))
             # 发布检测结果
-            self.publish_results(detections, msg.header.stamp)
-
+            self.publish_results(detections, msg.header.stamp, cv_image)
+           
 
             # 发布调试图像（带框）
             if self.debug_image_pub.get_num_connections() > 0:
@@ -116,7 +116,7 @@ class YOLODetector:
 
         return detections
 
-    def publish_results(self, detections, stamp):
+    def publish_results(self, detections, stamp, image):
         target_msg = PointStamped()
         if not detections:
             self.target_detected = False
@@ -136,9 +136,8 @@ class YOLODetector:
                 max_area = area
                 max_rect = rect
 
-        # 假设图像尺寸（可从实际图像获取，但这里用参数保持一致）
-        img_w = self.input_width
-        img_h = self.input_height
+        img_w = image.shape[1]
+        img_h = image.shape[0]
 
         x, y, w, h = max_rect
         center_x = x + w // 2
