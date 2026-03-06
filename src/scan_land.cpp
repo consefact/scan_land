@@ -23,6 +23,8 @@ namespace {
     cv::Mat image_roi;                   // ROI图像（从image_origin裁剪）
     std::mutex yolo_mutex;               // 保护latest_detections, roi, image_roi
 
+    cv::Mat image_processed;
+
     // 颜色检测结果缓存
     ColorResult takeoff_color;
     ColorResult land_color;
@@ -30,9 +32,6 @@ namespace {
     std_msgs::String land_color_msg;
     std_msgs::Bool land_detected_msg;
     std_msgs::Int8 mission_msg;
-
-    // 外部提供的全局图像源（假设由ros_inter提供）
-    extern cv::Mat image_origin;         // 原始图像，在回调中更新
 }
 
 // YOLO检测框回调

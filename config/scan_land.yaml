@@ -1,5 +1,5 @@
 # for yolo detect
-model_path : /home/jetson/group2_ws/src/scan_land/weights/best_openvino_model/
+model_path : /home/jetson/group2_ws/src/scan_land/weights/best_openvino_model_real/
 confidence_threshold : 0.3
 nms_threshold : 0.45
 input_width : 320

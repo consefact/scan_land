@@ -149,7 +149,7 @@ ColorResult color_detect(cv::Mat input, std::string color_name) {
 
 // 绘制信息（接口不变）
 void draw_info(cv::Mat input, ColorResult info) {
-    if (!info.success || info.largest_rect.area() == 0) return;
+    if (!info.is_detected || info.largest_rect.area() == 0) return;
 
     // 绘制边界矩形
     cv::rectangle(input, info.largest_rect, cv::Scalar(0, 255, 0), 2);
